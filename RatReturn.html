@@ -1,0 +1,271 @@
+<!DOCTYPE HTML>
+<!-- NOTE TO READERS
+       We were getting an endless loop on game reset in desktop mode.
+       I added a line to the updatecar() method to fix this.
+       Basically, it hides the Car that the ball is currently overlapping
+       to prevent the game over state from occurring over and over again.
+  -->
+
+
+<html lang="en-US">
+
+<head>
+    <meta charset="UTF-8">
+    <title>RatReturn.html</title>
+    <script type="text/javascript" src="./simpleGame.js"></script>
+    <script type="text/javascript">
+        var game;
+        var rat;
+        var car;
+        var goal;
+        var accel;
+        var background1;
+        var background2;
+        var background3;
+        var background4;
+        var background5;
+        var background6;
+        var numCar = 1;
+        var carCounter;
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        Car = function() {
+                tCar = new Sprite(game, "car1.png", 120, 80);
+                // tCar.setImgAngle(180);
+                tCar.setSpeed(numCar);
+
+                // tCar.setPosition(200, 200);
+
+                tCar.reset = function() {
+                        //don't let me overlap the goal or ball
+                        keepGoing = true;
+                        while (keepGoing) {
+
+                            // var randomCar = Math.floor(Math.random() * Math.floor(10));
+
+
+                            newX = Math.random(9) * this.cWidth;
+                            newY = Math.random(9) * this.cHeight;
+                            // newX = Math.floor(Math.random() * Math.floor(9)) + 15;
+                            // newY = Math.floor((Math.random()) * Math.floor(9));
+
+                            console.log(newY);
+
+                            this.setPosition(newX, newY);
+                            keepGoing = false;
+                            if (this.collidesWith(goal)) {
+                                keepGoing = true;
+                            } // end if
+                            if (this.distanceTo(rat) < 150) {
+                                keepGoing = true;
+                            }
+
+                            // end if
+                        } // end while loop
+                    } // end reset
+
+                tCar.reset();
+
+                return tCar;
+            } // end Car
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        function setupcar() {
+            car = null;
+            car = new Array(numCar)
+            for (i = 0; i < numCar; i++) {
+                car[i] = new Car();
+            } // end for
+        } // end setupcar
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        function updatecar() {
+            for (i = 0; i < numCar; i++) {
+                if (car[i].collidesWith(rat)) {
+                    //hide current Car to prevent refresh bug.
+                    car[i].hide();
+                    alert("You lose");
+                    game.stop();
+                    //re-start game
+                    document.location.href = "";
+                } // end if
+
+                car[i].update();
+            } // end for
+
+
+        } // end updatecar
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        Rat = function() {
+                tRat = new Sprite(game, "blackRatT.png", 30, 50);
+
+                //start paused 
+                tRat.setSpeed(0);
+                tRat.setImgAngle(270);
+                tRat.setPosition(400, 580);
+
+
+                // tRat = new Sprite(game, "redBall.png", 25, 25);
+
+
+                // tRat.reset = function() {
+                //         newX = Math.random() * this.cWidth;
+                //         newY = Math.random() * this.cHeight;
+
+                //         this.setPosition(newX, newY);
+                //     } // end reset
+
+                tRat.checkKeys = function() {
+
+
+                        if (keysDown[K_UP]) {
+                            tRat.setImgAngle(270);
+                            this.changeYby(-10);
+                        }
+
+                        if (keysDown[K_DOWN]) {
+                            tRat.setImgAngle(90);
+                            this.changeYby(10);
+                        }
+
+                        if (keysDown[K_LEFT]) {
+                            tRat.setImgAngle(180);
+                            this.changeXby(-10);
+                        }
+
+                        if (keysDown[K_RIGHT]) {
+                            tRat.setImgAngle(0);
+                            this.changeXby(10);
+                        }
+                    } // end checkKeys
+
+                tRat.checkAccel = function() {
+                        //use the accelerometer to get input
+                        newDX = accel.getAY();
+                        newDY = accel.getAX();
+
+                        newDX *= -5;
+                        newDY *= -5;
+
+                        rat.setDX(newDX);
+                        rat.setDY(newDY);
+                    } // end checkAccel
+
+
+                tRat.checkGravity = function() {
+                        if (this.y > 585) {
+                            this.setPosition(this.x, 585);
+                        }
+                        if (this.y < 15) {
+                            this.setPosition(this.x, 15);
+                        }
+                        if (this.x < 15) {
+                            this.setPosition(15, this.y)
+                        }
+                        if (this.x > 785) {
+                            this.setPosition(785, this.y)
+                        }
+                        // end if
+                    } // end checkGravity      
+
+
+                return tRat;
+            } // end rat
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        Goal = function() {
+                tGoal = new Sprite(game, "goal.png", 50, 50);
+                tGoal.setSpeed(0);
+
+                tGoal.reset = function() {
+                        newX = Math.random() * this.cWidth;
+                        newY = 25;
+                        this.setPosition(newX, newY);
+
+                        rat.setPosition(400, 580)
+                    } // end reset
+
+                tGoal.reset();
+
+                return tGoal;
+            } // end goal
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        function checkGoal() {
+            if (rat.collidesWith(goal)) {
+                car = null;
+                numCar++;
+                carCounter
+                    .innerHTML = "Car: " + numCar;
+                goal.reset();
+                setupcar();
+            } // end if
+        } // end check
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        function checkScore() {
+            if (numCar == 10) {
+                alert("You Win");
+                game.stop();
+            }
+        }
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        function init() {
+            game = new Scene();
+            background1 = new Sprite(game, "road.jpg", 800, 100);
+            background2 = new Sprite(game, "road.jpg", 800, 100);
+            background3 = new Sprite(game, "road.jpg", 800, 100);
+            background4 = new Sprite(game, "road.jpg", 800, 100);
+            background5 = new Sprite(game, "road.jpg", 800, 100);
+            background6 = new Sprite(game, "road.jpg", 800, 100);
+            background1.setSpeed(0);
+            background2.setSpeed(0);
+            background3.setSpeed(0);
+            background4.setSpeed(0);
+            background5.setSpeed(0);
+            background6.setSpeed(0);
+            background1.setPosition(400, 50);
+            background2.setPosition(400, 150);
+            background3.setPosition(400, 250);
+            background4.setPosition(400, 350);
+            background5.setPosition(400, 450);
+            background6.setPosition(400, 550);
+            rat = new Rat();
+            goal = new Goal();
+            setupcar();
+
+            carCounter = document.getElementById("carCounter");
+            accel = new Accel();
+
+            game.start();
+        } // end init
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        function update() {
+            game.clear();
+
+            //get input from accelerometer or keyboard
+            if (game.touchable) {
+                rat.checkAccel();
+            } else {
+                rat.checkKeys();
+            }
+            checkScore();
+            checkGoal();
+            background1.update();
+            background2.update();
+            background3.update();
+            background4.update();
+            background5.update();
+            background6.update();
+
+            goal.update();
+            rat.update();
+            rat.checkGravity();
+
+            updatecar();
+
+        } // end update
+    </script>
+</head>
+
+<body onload="init()">
+    <div id="carCounter" style="font-size:30px">
+        Car: 1
+    </div>
+</body>
+
+</html>
